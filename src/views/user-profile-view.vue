@@ -58,7 +58,7 @@
         },
         {
           headers: {
-            Authorization: `Bearer ${token}` // Pass token in Authorization header
+            // Authorization: `Bearer ${token}` // Pass token in Authorization header
           }
         }
       );

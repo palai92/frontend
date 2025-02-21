@@ -26,9 +26,23 @@ export const useAuthentication = defineStore('authentication', () => {
   const email = ref<string | null>(localStorage.getItem('email'));
   const token = ref<string | null>(localStorage.getItem('token'));
   const isLogged = ref<boolean>(!!token.value && !!email.value); // Gunakan ref
+  
 
   // Computed property (jika masih dibutuhkan)
   const isAuthenticated = computed(() => !!token.value);
+  
+  const getUserByEmail = async (email: string) => {
+    try {
+      const response = await axios.post(`get_user_profile`,{
+        email : email
+      });
+      return response.data.user.id;
+      console.log("respon dget data nya ini", response.data); 
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      throw error;
+    }
+  };
 
   // Login function
   const login = async (userEmail: string, userPassword: string) => {
@@ -81,5 +95,6 @@ export const useAuthentication = defineStore('authentication', () => {
     register,
     login,
     logout,
+    getUserByEmail
   };
 });
