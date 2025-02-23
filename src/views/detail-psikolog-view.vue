@@ -131,10 +131,15 @@
 </template>
 
 <script lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, reactive, onMounted } from 'vue';
 import { usePsikologStore } from '../stores/psikolog-store';
 import LandingComponent from '../components/landing-component.vue';
 import HeaderComponent from '../components/header-component.vue';
+import { useAuthentication } from '../stores/authetication-store';
+import { useAppointmentStore } from '../stores/appoinment-store';
+import axios from 'axios';
+
+
 
 export default {
   name: 'PsikologDetailView',
@@ -146,15 +151,17 @@ export default {
     const psikologStore = usePsikologStore();
     const psikolog = computed(() => psikologStore.selectedPsikolog); // Mengambil data psikolog dari Pinia store
 
-    const selectedSession = ref({
+    const selectedSession = reactive({
       type: 'Online',
       date: '',
       time: '',
     });
 
+    
+
     const availableDates = computed(() => {
       const psikolog = psikologStore.selectedPsikolog;
-      const selectedType = selectedSession.value.type;
+      const selectedType = selectedSession.type;
 
       if (!psikolog) return [];
 
@@ -192,7 +199,7 @@ export default {
 
     const availableTimes = computed(() => {
       const psikolog = psikologStore.selectedPsikolog;
-      const selectedType = selectedSession.value.type;
+      const selectedType = selectedSession.type;
       
 
       if (!psikolog) return [];
@@ -225,8 +232,42 @@ export default {
     const uploadedFile = ref<File | null>(null);
     const paymentMethod = ref('Transfer');
 
+    const form = reactive({
+      accountNumber: '1222211212',
+      date: '',
+      psychologistId: '',
+      time: '',
+      transactionType: 'Transfer',
+      userId: ''
+      });
+
+    const authStore = useAuthentication();
+    const userId = ref<null>();
+
+    const handleid = async () => {
+        try {
+            if (authStore.email) {
+              userId.value = await authStore.getUserByEmail(authStore.email)?? 0;
+              console.log("ini usernya id",userId.value);
+              form.userId = String(userId.value)
+            }
+        } catch (error) {
+          console.error('Registration failed:', error);
+        }
+      };
+
+     
+    onMounted(() => {
+      handleid();
+    });
+
     const bookSession = () => {
-      if (!selectedSession.value.date || !selectedSession.value.time) {
+      form.date = selectedSession.date
+      form.time = selectedSession.time
+      form.psychologistId = psikolog.value?.id ? String(psikolog.value.id) : '';
+      
+      console.log("isi formnya nih", form);
+      if (!selectedSession.date || !selectedSession.time) {
         alert('Harap pilih tanggal dan waktu sesi.');
         return;
       }
@@ -242,13 +283,26 @@ export default {
       }
     };
 
-    const uploadProof = () => {
+    const uploadProof = async () => {
       if (!uploadedFile.value) {
         alert('Harap upload bukti pembayaran.');
         return;
       }
 
       console.log('Bukti pembayaran berhasil diupload:', uploadedFile.value);
+      try {
+        const response = await axios.post('book_appointment', form, {
+          headers: {
+            // 'Content-Type': 'multipart/form-data',
+            // Authorization: `Bearer ${token}`, // Include token in the header
+          },
+        });
+        return response.data;
+        console.log ('ini responnya ya gaesss', response.data);
+      } catch (error) {
+        console.error('Error saat mengirim data:', error);
+        throw new Error('Gagal mengirim data ke server.');
+      }
       alert('Bukti pembayaran berhasil diupload!');
     };
 
@@ -265,6 +319,7 @@ export default {
       uploadProof,
     };
   },
+  
 };
 </script>
 

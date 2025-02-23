@@ -58,7 +58,6 @@ const handleid = async () => {
 
 onMounted(() => {
   handleid();
-  
 });
 // transactionStore.fetchTransactions(userId);
 
